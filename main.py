@@ -1,11 +1,7 @@
 from dotenv import load_dotenv
 import os
-
-
-
 from flask import Flask, request
 import telebot
-import os
 
 # ---------------- CARGAR TOKEN ----------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
@@ -14,6 +10,12 @@ if not TOKEN:
 
 # ---------------- INICIALIZAR BOT ----------------
 bot = telebot.TeleBot(TOKEN)
+
+# ---------------- HANDLER /start ----------------
+@bot.message_handler(commands=['start'])
+def start(message):
+    print(f"Comando /start recibido de: {message.chat.id}")
+    bot.send_message(message.chat.id, "¡Bot funcionando en Render!")
 
 # ---------------- INICIALIZAR FLASK ----------------
 app = Flask(__name__)
@@ -27,6 +29,8 @@ def home():
 @app.route("/postback", methods=["GET", "POST"])
 def postback():
     data = request.values
+    print("POSTBACK RECIBIDO:", data)
+    
     user_id = data.get("user_id")
     amount = data.get("amount")
     
@@ -45,12 +49,15 @@ def postback():
 # ---------------- WEBHOOK ----------------
 WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/"
 
+# Elimina cualquier webhook antiguo
 bot.remove_webhook()
 bot.set_webhook(url=WEBHOOK_URL)
+print(f"Webhook configurado en: {WEBHOOK_URL}")
 
 @app.route("/", methods=["POST"])
 def webhook():
     json_data = request.get_json()
+    print("MENSAJE RECIBIDO:", json_data)
     if json_data:
         update = telebot.types.Update.de_json(json_data)
         bot.process_new_updates([update])
