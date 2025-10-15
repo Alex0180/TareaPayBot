@@ -1,14 +1,16 @@
 from dotenv import load_dotenv
 import os
+
+
+
 from flask import Flask, request
 import telebot
-import threading
+import os
 
 # ---------------- CARGAR TOKEN ----------------
-load_dotenv()
-TOKEN = os.getenv("TELEGRAM_TOKEN")
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TOKEN:
-    raise ValueError("El token ")
+    raise ValueError("El token no está configurado en las variables de entorno")
 
 # ---------------- INICIALIZAR BOT ----------------
 bot = telebot.TeleBot(TOKEN)
@@ -16,17 +18,18 @@ bot = telebot.TeleBot(TOKEN)
 # ---------------- INICIALIZAR FLASK ----------------
 app = Flask(__name__)
 
+# ---------------- RUTA DE PRUEBA ----------------
 @app.route("/")
 def home():
     return "Bot funcionando!"
 
+# ---------------- POSTBACK ----------------
 @app.route("/postback", methods=["GET", "POST"])
 def postback():
     data = request.values
     user_id = data.get("user_id")
     amount = data.get("amount")
     
-    # Validar datos
     if not user_id or not amount:
         return "Faltan datos", 400
     
@@ -36,13 +39,24 @@ def postback():
     except ValueError:
         return "Datos inválidos", 400
 
-    # Enviar mensaje al usuario
     bot.send_message(user_id_int, f"¡Ganaste ${amount_float}!")
     return "OK", 200
 
-# ---------------- EJECUTAR BOT EN SEGUNDO PLANO ----------------
-threading.Thread(target=lambda: bot.infinity_polling(), daemon=True).start()
+# ---------------- WEBHOOK ----------------
+WEBHOOK_URL = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/"
+
+bot.remove_webhook()
+bot.set_webhook(url=WEBHOOK_URL)
+
+@app.route("/", methods=["POST"])
+def webhook():
+    json_data = request.get_json()
+    if json_data:
+        update = telebot.types.Update.de_json(json_data)
+        bot.process_new_updates([update])
+    return "OK", 200
 
 # ---------------- EJECUTAR FLASK ----------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=3000)
+    port = int(os.environ.get("PORT", 3000))
+    app.run(host="0.0.0.0", port=port)
