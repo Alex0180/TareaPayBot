@@ -2,15 +2,12 @@ import os
 from flask import Flask, request
 import telebot
 
-# ---------------- CARGAR TOKEN ----------------
+# ---------------- TOKEN ----------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 if not TOKEN:
-    raise ValueError("El token no está configurado en las variables de entorno")
+    raise ValueError("Token no configurado en variables de entorno")
 
-# ---------------- INICIALIZAR BOT ----------------
 bot = telebot.TeleBot(TOKEN)
-
-# ---------------- INICIALIZAR FLASK ----------------
 app = Flask(__name__)
 
 # ---------------- RUTA DE PRUEBA ----------------
