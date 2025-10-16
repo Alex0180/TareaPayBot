@@ -19,7 +19,6 @@ bot_v8.register_handlers(bot)
 # ---------------- INICIALIZAR BASE DE DATOS ----------------
 bot_v8.init_db()
 bot_v8.migrate_json_to_sqlite()
-bot_v8.init_game_db()  # <-- Inicializa DB de juegos internos
 
 # ---------------- FLASK APP ----------------
 app = Flask(__name__)
